@@ -1,0 +1,12 @@
+.DS_Store
+.venv
+__pycache__/
+.idea/
+build/
+*.spec
+.secret.json
+birthdays.csv
+TEST_birthdays.csv
+.credentials.json
+.env
+.cache

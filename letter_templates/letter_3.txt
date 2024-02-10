@@ -1,0 +1,9 @@
+[TITLE] [NAME],
+
+Heute ist dein Geburtstag!
+Wir wünschen dir einen wundervollen Tag!
+
+
+Liebe Grüsse
+
+[SENDER]
