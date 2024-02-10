@@ -36,10 +36,6 @@ if PROXY is not None and PROXY_PORT is not None:
 BIRTHDAY_FILE = "TEST_birthdays.csv"
 
 
-def load_birthday_data(file) -> pandas.DataFrame:
-    return pandas.read_csv(file)
-
-
 def filter_active(df: pandas.DataFrame) -> pandas.DataFrame:
     return df[df['active'] == 1]
 
@@ -48,13 +44,16 @@ def filter_has_email(df: pandas.DataFrame) -> pandas.DataFrame:
     return df.dropna(subset=['email'])
 
 
-def filter_birthdays(df: pandas.DataFrame,
-                     current_month, current_day) -> pandas.DataFrame:
-    return df.dropna(subset=['year', 'month', 'day']).loc[
-        (df['month'] == current_month) & (df['day'] == current_day)]
+def filter_has_birthday(df: pandas.DataFrame) -> pandas.DataFrame:
+    return df.dropna(subset=['year', 'month', 'day'])
 
 
-def extract_filtered_entries(df: pandas.DataFrame) -> list[dict]:
+def filter_birthday_match(df: pandas.DataFrame,
+                          month, day) -> pandas.DataFrame:
+    return df.loc[(df['month'] == month) & (df['day'] == day)]
+
+
+def extract_fields(df: pandas.DataFrame) -> list[dict]:
     return [{'firstname': row['firstname'],
              'gender': row['gender'], 'email': row['email'],
              'year': int(row['year']), 'month': int(row['month']),
@@ -62,17 +61,19 @@ def extract_filtered_entries(df: pandas.DataFrame) -> list[dict]:
             for _, row in df.iterrows()]
 
 
-def find_persons_with_birthday_today(file) -> list[dict]:
-    df_all = load_birthday_data(file)
+def find_persons_with_birthday_today(file: str) -> list[dict]:
+    # Looks quite verbose, but it's easier to understand and adapt:
+    df_all = pandas.read_csv(file)
     df_active = filter_active(df_all)
-    df_send = filter_has_email(df_active)
+    df_has_email = filter_has_email(df_active)
+    df_birthday_exists = filter_has_birthday(df_has_email)
     now = dt.datetime.now()
     current_month = now.month
     current_day = now.day
-    df_birthday_exists = filter_birthdays(
-        df_send, current_month, current_day)
-    filtered_entries = extract_filtered_entries(df_birthday_exists)
-    return filtered_entries
+    df_birthday_match = filter_birthday_match(
+        df_birthday_exists, current_month, current_day)
+    persons_that_have_birthday = extract_fields(df_birthday_match)
+    return persons_that_have_birthday
 
 
 def read_random_template() -> str:
@@ -83,7 +84,7 @@ def read_random_template() -> str:
     return content
 
 
-def replace_content(content: str, name_to_insert, gender) -> str:
+def replace_content(content: str, name_to_insert: str, gender: str) -> str:
     placeholder_name = '[NAME]'
     placeholder_title = '[TITLE]'
     placeholder_sender = '[SENDER]'
@@ -98,7 +99,7 @@ def replace_content(content: str, name_to_insert, gender) -> str:
     return content_new
 
 
-def send_mail(email_addr, content, bcc=None) -> None:
+def send_mail(email_addr: str, content: str, bcc: str | None) -> None:
     print(f"Sending mail to {email_addr} from {FROM_ADDR}")
 
     with smtplib.SMTP(host=HOSTNAME, port=PORT) as connection:
