@@ -147,4 +147,6 @@ for person in persons_with_birthday:
     spotify_urls = spotify.get_spotify_urls()
 
 send_mail_for_all_bday_persons(
-    persons_with_birthday, top_three_songs_for_birthday, spotify_urls=spotify_urls)
+    persons_with_birthday,
+    top_three_songs_for_birthday,
+    spotify_urls=spotify_urls)

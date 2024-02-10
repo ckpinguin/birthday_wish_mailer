@@ -18,7 +18,7 @@ class BillboardTimeMachine:
             {response.status_code}"
         return response.text
 
-    def __get_artists_and_tracks(self, html_data: str) -> list:
+    def __get_artists_and_tracks(self, html_data: str) -> list[tuple]:
         tracks = []
         artists = []
         soup = BeautifulSoup(html_data, 'html.parser')
@@ -34,7 +34,7 @@ class BillboardTimeMachine:
 
         return list(zip(tracks, artists))
 
-    def get_top_three_artists_and_tracks(self) -> list:
+    def get_top_three_artists_and_tracks(self) -> list[tuple]:
         data = self.__getBillboard()
         result = self.__get_artists_and_tracks(data)
         return result[:3]
