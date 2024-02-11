@@ -1,7 +1,6 @@
 from email.message import EmailMessage
 import smtplib
 import json
-from typing import Sequence
 import pandas
 import random
 import datetime as dt
@@ -121,8 +120,10 @@ def send_mail(email_addr: str, content: str, bcc: str | None) -> None:
 
 def get_special_content(top_three_songs_for_birthday: list[tuple],
                         spotify_urls: list[str]) -> str:
-    content_special = "\n\nP.S. Die 3 Top-Songs der US-Charts an deinem Geburtsdatum waren:\n"
-    content_special += "(Falls du kein Spotify hast, kannst du die Songs sehr leicht auf <a href='www.youtube.com'>YouTube</a> suchen)\n\n"
+    content_special = ("\n\nP.S. Die 3 Top-Songs der US-Charts an "
+                       "Deinem Geburtsdatum waren:\n")
+    content_special += ("(Falls du kein Spotify hast, kannst du die"
+                        "Songs sehr leicht auf www.youtube.com suchen)\n\n")
     i = 0
     for song, artist in top_three_songs_for_birthday:
         content_special += \
@@ -131,22 +132,23 @@ def get_special_content(top_three_songs_for_birthday: list[tuple],
     return content_special
 
 
-def send_birthday_mail(
+def construct_and_send_birthday_mail(
         person: dict,
         top_three_songs_for_birthday: list[tuple],
         spotify_urls: list[str]) -> None:
+
     template_content = read_random_template()
     content = replace_content(
         template_content, person['firstname'], person['gender'])
 
-    if top_three_songs_for_birthday:
-        content += "\n" + \
-            get_special_content(top_three_songs_for_birthday, spotify_urls)
-    if TEST_MODE:
-        print(f"TEST MODE: Sending to test recipient {TEST_RECIPIENT}")
-        send_mail(TEST_RECIPIENT, content, bcc=BCC_ADDR)
-    else:
-        send_mail(person['email'], content, bcc=BCC_ADDR)
+    special_content = get_special_content(
+        top_three_songs_for_birthday, spotify_urls) if\
+        top_three_songs_for_birthday else ""
+
+    content += "\n" + special_content if special_content else ""
+
+    recipient_email = TEST_RECIPIENT if TEST_MODE else person['email']
+    send_mail(recipient_email, content, bcc=BCC_ADDR)
 
 
 def get_billboard_top_three_for_date(year: int,
@@ -166,13 +168,22 @@ def main():
     parser = argparse.ArgumentParser(
         'Send birthday emails with some extras :-)')
     parser.add_argument(
-        '-t', '--test',   help='Use test CSV input file instead of real file  and send all mails to a test address (defined in .secret.json)', action='store_true')
+        '-t',
+        '--test',
+        help=("Use test CSV input file instead of real file and"
+              "send all mails to a test address (defined in .secret.json)"),
+        action='store_true')
     args = parser.parse_args()
     if args.test:
         BIRTHDAY_FILE = BIRTHDAY_TEST_FILE
         TEST_MODE = True
 
     persons_with_birthday = find_persons_with_birthday_today(BIRTHDAY_FILE)
+    if persons_with_birthday:
+        print(f"Persons with birthday today: {persons_with_birthday}")
+    else:
+        print("No persons with birthday today found. Exiting.")
+        exit(0)
 
     for person in persons_with_birthday:
         print(f"Getting data for {person}")
@@ -180,18 +191,17 @@ def main():
         billboard_entries = []
         spotify_urls = []
         if year < 1958:
-            print(
-                f"Year of birth is before billboard charts started. No special content will be added.")
-            billboard_entries = []
-            spotify_urls = []
+            print(("Year of birth is before billboard charts started."
+                   "No special content will be added."))
         else:
             billboard_entries = get_billboard_top_three_for_date(
                 year, month, day)
-            # Spotifier constructor expects two lists, so we need to unpack the zipped tuple-list:
+            # Spotifier constructor expects two lists, so we need
+            # to unpack the zipped tuple-list:
             spotify = Spotifier(*zip(*billboard_entries))
             spotify_urls = spotify.get_spotify_urls()
 
-        send_birthday_mail(
+        construct_and_send_birthday_mail(
             person,
             billboard_entries,
             spotify_urls=spotify_urls)
