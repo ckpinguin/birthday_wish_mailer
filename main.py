@@ -1,12 +1,14 @@
 from email.message import EmailMessage
 import smtplib
 import json
+from typing import Sequence
 import pandas
 import random
 import datetime as dt
 import socks
 from billboard_timemachine import BillboardTimeMachine
 from spotifier import Spotifier
+import argparse
 
 
 try:
@@ -16,7 +18,11 @@ except FileNotFoundError:
     print("ERROR: No config file found!")
     exit(0)
 
+BIRTHDAY_FILE = "birthdays.csv"
+BIRTHDAY_TEST_FILE = "TEST_birthdays.csv"
+TEST_MODE = False
 
+TEST_RECIPIENT = config_data["TEST_RECIPIENT"]
 SPOTIFY_CLIENT_ID = config_data["SPOTIFY_CLIENT_ID"]
 SPOTIFY_CLIENT_SECRET = config_data["SPOTIFY_CLIENT_SECRET"]
 SENDER = config_data.get("SENDER")
@@ -31,9 +37,6 @@ PROXY_PORT = config_data.get("PROXY_PORT", None)
 if PROXY is not None and PROXY_PORT is not None:
     socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS4, PROXY, PROXY_PORT)
     socks.wrapmodule(smtplib)
-
-
-BIRTHDAY_FILE = "TEST_birthdays.csv"
 
 
 def filter_active(df: pandas.DataFrame) -> pandas.DataFrame:
@@ -124,29 +127,53 @@ def send_mail_for_all_bday_persons(
         template_content = read_random_template()
         content = replace_content(
             template_content, person['firstname'], person['gender'])
-        content_special = "\n\nP.S. Die 3 Top-Songs der US-Charts an deinem Geburtsdatum waren:\n\n"
+        content_special = "\n\nP.S. Die 3 Top-Songs der US-Charts an deinem Geburtsdatum waren:\n"
+        content_special += "(Falls du kein Spotify hast, kannst du die Songs sehr leicht auf <a href='www.youtube.com'>YouTube</a> suchen)\n\n"
         i = 0
         for song, artist in top_three_songs_for_birthday:
-            content_special += f"Song: {song}, Interpret: {artist}: {spotify_urls[i]}\n"
+            content_special += \
+                f"Song: {song}, Interpret: {artist}: {spotify_urls[i]}\n"
             i += 1
         content += "\n" + content_special
-        send_mail(person['email'], content, bcc=BCC_ADDR)
+        if TEST_MODE:
+            print(f"TEST MODE: Sending to test recipient {TEST_RECIPIENT}")
+            send_mail(TEST_RECIPIENT, content, bcc=BCC_ADDR)
+        else:
+            send_mail(person['email'], content, bcc=BCC_ADDR)
+
+
+def main():
+    global TEST_MODE, BIRTHDAY_FILE
+    parser = argparse.ArgumentParser(
+        'Send birthday emails with some extras :-)')
+    parser.add_argument(
+        '-t', '--test',   help='Use test file instead of real file  and send all mails to a test address (defined in .secret.json)', action='store_true')
+    args = parser.parse_args()
+    if args.test:
+        BIRTHDAY_FILE = BIRTHDAY_TEST_FILE
+        TEST_MODE = True
+
+    persons_with_birthday = find_persons_with_birthday_today(BIRTHDAY_FILE)
+
+    top_three_songs_for_birthday = []
+    spotify_urls = []
+    for person in persons_with_birthday:
+        print(f"Getting data for {person}")
+        year = str(person['year'])
+        month = str(person['month']).zfill(2)
+        day = str(person['day']).zfill(2)
+        billboard = BillboardTimeMachine(
+            f"{year}-{month}-{day}")
+        top_three_songs_for_birthday = billboard.get_top_three_artists_and_tracks()
+        spotify = Spotifier(*zip(*top_three_songs_for_birthday))
+        spotify_urls = spotify.get_spotify_urls()
+
+    send_mail_for_all_bday_persons(
+        persons_with_birthday,
+        top_three_songs_for_birthday,
+        spotify_urls=spotify_urls)
 
 
 # ___ MAIN ____
-persons_with_birthday = find_persons_with_birthday_today(BIRTHDAY_FILE)
-
-for person in persons_with_birthday:
-    year = str(person['year'])
-    month = str(person['month']).zfill(2)
-    day = str(person['day']).zfill(2)
-    billboard = BillboardTimeMachine(
-        f"{year}-{month}-{day}")
-    top_three_songs_for_birthday = billboard.get_top_three_artists_and_tracks()
-    spotify = Spotifier(*zip(*top_three_songs_for_birthday))
-    spotify_urls = spotify.get_spotify_urls()
-
-send_mail_for_all_bday_persons(
-    persons_with_birthday,
-    top_three_songs_for_birthday,
-    spotify_urls=spotify_urls)
+if __name__ == "__main__":
+    main()
