@@ -119,27 +119,46 @@ def send_mail(email_addr: str, content: str, bcc: str | None) -> None:
         connection.send_message(msg)
 
 
-def send_mail_for_all_bday_persons(
-        persons_with_birthday: list[dict],
+def get_special_content(top_three_songs_for_birthday: list[tuple],
+                        spotify_urls: list[str]) -> str:
+    content_special = "\n\nP.S. Die 3 Top-Songs der US-Charts an deinem Geburtsdatum waren:\n"
+    content_special += "(Falls du kein Spotify hast, kannst du die Songs sehr leicht auf <a href='www.youtube.com'>YouTube</a> suchen)\n\n"
+    i = 0
+    for song, artist in top_three_songs_for_birthday:
+        content_special += \
+            f"Song: {song}, Interpret: {artist}: {spotify_urls[i]}\n"
+        i += 1
+    return content_special
+
+
+def send_birthday_mail(
+        person: dict,
         top_three_songs_for_birthday: list[tuple],
         spotify_urls: list[str]) -> None:
-    for person in persons_with_birthday:
-        template_content = read_random_template()
-        content = replace_content(
-            template_content, person['firstname'], person['gender'])
-        content_special = "\n\nP.S. Die 3 Top-Songs der US-Charts an deinem Geburtsdatum waren:\n"
-        content_special += "(Falls du kein Spotify hast, kannst du die Songs sehr leicht auf <a href='www.youtube.com'>YouTube</a> suchen)\n\n"
-        i = 0
-        for song, artist in top_three_songs_for_birthday:
-            content_special += \
-                f"Song: {song}, Interpret: {artist}: {spotify_urls[i]}\n"
-            i += 1
-        content += "\n" + content_special
-        if TEST_MODE:
-            print(f"TEST MODE: Sending to test recipient {TEST_RECIPIENT}")
-            send_mail(TEST_RECIPIENT, content, bcc=BCC_ADDR)
-        else:
-            send_mail(person['email'], content, bcc=BCC_ADDR)
+    template_content = read_random_template()
+    content = replace_content(
+        template_content, person['firstname'], person['gender'])
+
+    if top_three_songs_for_birthday:
+        content += "\n" + \
+            get_special_content(top_three_songs_for_birthday, spotify_urls)
+    if TEST_MODE:
+        print(f"TEST MODE: Sending to test recipient {TEST_RECIPIENT}")
+        send_mail(TEST_RECIPIENT, content, bcc=BCC_ADDR)
+    else:
+        send_mail(person['email'], content, bcc=BCC_ADDR)
+
+
+def get_billboard_top_three_for_date(year: int,
+                                     month: int,
+                                     day: int) -> list[tuple]:
+    year = str(year)
+    month = str(month).zfill(2)
+    day = str(day).zfill(2)
+    billboard = BillboardTimeMachine(
+        f"{year}-{month}-{day}")
+    top_three_songs_for_date = billboard.get_top_three_artists_and_tracks()
+    return top_three_songs_for_date
 
 
 def main():
@@ -147,7 +166,7 @@ def main():
     parser = argparse.ArgumentParser(
         'Send birthday emails with some extras :-)')
     parser.add_argument(
-        '-t', '--test',   help='Use test file instead of real file  and send all mails to a test address (defined in .secret.json)', action='store_true')
+        '-t', '--test',   help='Use test CSV input file instead of real file  and send all mails to a test address (defined in .secret.json)', action='store_true')
     args = parser.parse_args()
     if args.test:
         BIRTHDAY_FILE = BIRTHDAY_TEST_FILE
@@ -155,23 +174,27 @@ def main():
 
     persons_with_birthday = find_persons_with_birthday_today(BIRTHDAY_FILE)
 
-    top_three_songs_for_birthday = []
-    spotify_urls = []
     for person in persons_with_birthday:
         print(f"Getting data for {person}")
-        year = str(person['year'])
-        month = str(person['month']).zfill(2)
-        day = str(person['day']).zfill(2)
-        billboard = BillboardTimeMachine(
-            f"{year}-{month}-{day}")
-        top_three_songs_for_birthday = billboard.get_top_three_artists_and_tracks()
-        spotify = Spotifier(*zip(*top_three_songs_for_birthday))
-        spotify_urls = spotify.get_spotify_urls()
+        year, month, day = person['year'], person['month'], person['day']
+        billboard_entries = []
+        spotify_urls = []
+        if year < 1958:
+            print(
+                f"Year of birth is before billboard charts started. No special content will be added.")
+            billboard_entries = []
+            spotify_urls = []
+        else:
+            billboard_entries = get_billboard_top_three_for_date(
+                year, month, day)
+            # Spotifier constructor expects two lists, so we need to unpack the zipped tuple-list:
+            spotify = Spotifier(*zip(*billboard_entries))
+            spotify_urls = spotify.get_spotify_urls()
 
-    send_mail_for_all_bday_persons(
-        persons_with_birthday,
-        top_three_songs_for_birthday,
-        spotify_urls=spotify_urls)
+        send_birthday_mail(
+            person,
+            billboard_entries,
+            spotify_urls=spotify_urls)
 
 
 # ___ MAIN ____
