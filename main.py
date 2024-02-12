@@ -175,7 +175,7 @@ def main():
         action='store_true')
     args = parser.parse_args()
     if args.test:
-        BIRTHDAY_FILE = BIRTHDAY_TEST_FILE
+        # BIRTHDAY_FILE = BIRTHDAY_TEST_FILE
         TEST_MODE = True
 
     persons_with_birthday = find_persons_with_birthday_today(BIRTHDAY_FILE)
