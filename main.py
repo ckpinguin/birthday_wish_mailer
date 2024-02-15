@@ -160,8 +160,14 @@ def get_content_and_send_email_to(persons: list) -> None:
             spotify_urls=spotify_urls)
         recipient_email = TEST_RECIPIENT if TEST_MODE else person['email']
         mailer = Mailer(email_addr=recipient_email, bcc=BCC_ADDR)
-        mailer.attach_image_to_mail('images/Happy-Birthday-Card.jpg')
+        mailer.attach_image_to_mail(get_random_image_path())
         mailer.send_mail(content=content)
+
+
+def get_random_image_path() -> str:
+    rand_no = random.randint(1, 3)
+    image_path = f"images/small_bday{rand_no}.png"
+    return image_path
 
 
 def main():
