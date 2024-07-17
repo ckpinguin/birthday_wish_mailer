@@ -93,7 +93,7 @@ def get_special_content(                        top_three_songs_for_birthday: li
                         spotify_urls: list[str]) -> str:
     content_special = ("<br><br>P.S. Die 3 Top-Songs der US-Charts an "
                        "Deinem Geburtsdatum waren:<br>")
-    content_special += ("(Falls du kein Spotify hast, kannst du die"
+    content_special += ("(Falls du kein Spotify hast, kannst du die "
                         "Songs sehr leicht auf www.youtube.com suchen)<br>")
     i = 0
     content_special += "<ul>"
