@@ -89,17 +89,18 @@ def replace_content(content: str, name_to_insert: str, gender: str) -> str:
     return content_new
 
 
-def get_special_content(                        top_three_songs_for_birthday: list[tuple],
+def get_special_content(birthday: str, top_three_songs_for_birthday: list[tuple],
                         spotify_urls: list[str]) -> str:
-    content_special = ("<br><br>P.S. Die 3 Top-Songs der US-Charts an "
-                       "Deinem Geburtsdatum waren:<br>")
+    content_special = ("<br><br>P.S. Die 3 Top-Songs der US-Charts am "
+                       f"{birthday} waren:<br>")
     content_special += ("(Falls du kein Spotify hast, kannst du die "
-                        "Songs sehr leicht auf www.youtube.com suchen)<br>")
+                        "Songs sehr leicht auf www.youtube.com finden)<br>")
     i = 0
     content_special += "<ul>"
     for song, artist in top_three_songs_for_birthday:
         content_special += \
-            f"<li><a href='{spotify_urls[i]}'>Song: {song}, Interpret: {artist}</a></li>"
+            f"<li><a href='{spotify_urls[i]}'>Song: {
+                song}, Interpret: {artist}</a></li>"
         i += 1
     content_special += "</ul>"
     return content_special
@@ -107,6 +108,7 @@ def get_special_content(                        top_three_songs_for_birthday: li
 
 def construct_content(
         person: dict,
+        birthday: str,
         top_three_songs_for_birthday: list[tuple],
         spotify_urls: list[str]) -> str:
 
@@ -115,10 +117,14 @@ def construct_content(
         template_content, person['firstname'], person['gender'])
 
     special_content = get_special_content(
-        top_three_songs_for_birthday, spotify_urls) if\
+        top_three_songs_for_birthday=top_three_songs_for_birthday,
+        birthday=birthday,
+        spotify_urls=spotify_urls
+    ) if\
         top_three_songs_for_birthday else ""
 
-    content_html = f"<html><head><meta charset='UTF-8'></head><body><p>{content}</p><p>{special_content}</p></body></html>"
+    content_html = f"<html><head><meta charset='UTF-8'></head><body><p>{
+        content}</p><p>{special_content}</p></body></html>"
     content_html = content_html.replace("\n", "<br>")  # for letter
     return content_html
 
@@ -153,8 +159,9 @@ def get_content_and_send_email_to(persons: list) -> None:
             spotify_urls = spotify.get_spotify_urls()
 
         content = construct_content(
-            person,
-            billboard_entries,
+            person=person,
+            birthday=f"{day}.{month}.{year}",
+            top_three_songs_for_birthday=billboard_entries,
             spotify_urls=spotify_urls)
         recipient_email = TEST_RECIPIENT if TEST_MODE else person['email']
         mailer = Mailer(email_addr=recipient_email, bcc=BCC_ADDR)
