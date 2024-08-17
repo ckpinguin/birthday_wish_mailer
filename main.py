@@ -122,7 +122,7 @@ def construct_content(
     ) if\
         top_three_songs_for_birthday else ""
 
-    content_html = f"< html > <head > <meta charset = 'UTF-8' > </head > <body > <p > {content} < /p > <p > {special_content} < /p > </body > </html >"  # noqa
+    content_html = f"<html> <head> <meta charset='UTF-8'> </head> <body> <p> {content} </p  <p> {special_content} </p> </body> </html>"  # noqa
     content_html = content_html.replace("\n", "<br>")  # for letter
     return content_html
 
