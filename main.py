@@ -99,8 +99,7 @@ def get_special_content(birthday: str, top_three_songs_for_birthday: list[tuple]
     content_special += "<ul>"
     for song, artist in top_three_songs_for_birthday:
         content_special += \
-            f"<li><a href='{spotify_urls[i]}'>Song: {
-                song}, Interpret: {artist}</a></li>"
+            f"<li><a href='{spotify_urls[i]}'>Song: {song}, Interpret: {artist}</a></li>"  # noqa
         i += 1
     content_special += "</ul>"
     return content_special
@@ -123,8 +122,7 @@ def construct_content(
     ) if\
         top_three_songs_for_birthday else ""
 
-    content_html = f"<html><head><meta charset='UTF-8'></head><body><p>{
-        content}</p><p>{special_content}</p></body></html>"
+    content_html = f"< html > <head > <meta charset = 'UTF-8' > </head > <body > <p > {content} < /p > <p > {special_content} < /p > </body > </html >"  # noqa
     content_html = content_html.replace("\n", "<br>")  # for letter
     return content_html
 
