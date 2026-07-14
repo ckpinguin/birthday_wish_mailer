@@ -85,9 +85,9 @@ because they layer onto the same small codebase (see Dependencies).
 ### Implementation for User Story 3
 
 - [X] T019 [P] [US3] Delete replaced/dead files: spotifier.py, billboard_timemachine.py, Procfile, fly.toml (plan Structure Decision)
-- [ ] T020 [P] [US3] Add one-line justification for each runtime dependency in README.md (SC-002, FR-006)
-- [ ] T021 [P] [US3] Update README.md Requirements section: Python ≥ 3.12 (drop the "3.10–3.12 pin ceiling" note)
-- [ ] T022 [US3] Verify fresh installs: `rm -rf .venv && PYTHON=python3.12 ./run.sh --help`, then scratch-copy check with `PYTHON=python3` (3.14) — both must bootstrap and print usage (SC-003); finish with one `./run.sh --test`
+- [X] T020 [P] [US3] Add one-line justification for each runtime dependency in README.md (SC-002, FR-006)
+- [X] T021 [P] [US3] Update README.md Requirements section: Python ≥ 3.12 (drop the "3.10–3.12 pin ceiling" note)
+- [X] T022 [US3] Verify fresh installs: `rm -rf .venv && PYTHON=python3.12 ./run.sh --help`, then scratch-copy check with `PYTHON=python3` (3.14) — both must bootstrap and print usage (SC-003); finish with one `./run.sh --test`
 
 **Checkpoint**: `pip list` shows requests + beautifulsoup4 (+ transitives) only; installs clean on 3.12 and 3.14
 
@@ -101,12 +101,12 @@ because they layer onto the same small codebase (see Dependencies).
 
 ### Implementation for User Story 4
 
-- [ ] T023 [P] [US4] Create tests/fixtures/birthdays_fixture.csv with synthetic persons only (no real data — Principle II) covering: match today, inactive, missing email, incomplete date, unparsable year, born < 1958
-- [ ] T024 [P] [US4] Create tests/fixtures/billboard_sample.html — trimmed saved Billboard chart page with ≥ 3 entries matching the selectors used in charts.py
-- [ ] T025 [P] [US4] Create tests/test_recipients.py: selection rules against the fixture CSV incl. skip cases and date matching (FR-002)
-- [ ] T026 [P] [US4] Create tests/test_content.py: placeholder filling, f/m salutation, postscript with and without links, no leftover `[NAME]`-style placeholders, output parses as valid HTML
-- [ ] T027 [P] [US4] Create tests/test_charts.py: parser returns 3 (title, artist) tuples from the fixture; empty/garbage HTML raises ChartsError
-- [ ] T028 [US4] Run `.venv/bin/python -m pytest` and `.venv/bin/python -m flake8 .`: all green, zero `# noqa` in the codebase, suite < 1 min offline (SC-005); negative check per quickstart §2
+- [X] T023 [P] [US4] Create tests/fixtures/birthdays_fixture.csv with synthetic persons only (no real data — Principle II) covering: match today, inactive, missing email, incomplete date, unparsable year, born < 1958
+- [X] T024 [P] [US4] Create tests/fixtures/billboard_sample.html — trimmed saved Billboard chart page with ≥ 3 entries matching the selectors used in charts.py
+- [X] T025 [P] [US4] Create tests/test_recipients.py: selection rules against the fixture CSV incl. skip cases and date matching (FR-002)
+- [X] T026 [P] [US4] Create tests/test_content.py: placeholder filling, f/m salutation, postscript with and without links, no leftover `[NAME]`-style placeholders, output parses as valid HTML
+- [X] T027 [P] [US4] Create tests/test_charts.py: parser returns 3 (title, artist) tuples from the fixture; empty/garbage HTML raises ChartsError
+- [X] T028 [US4] Run `.venv/bin/python -m pytest` and `.venv/bin/python -m flake8 .`: all green, zero `# noqa` in the codebase, suite < 1 min offline (SC-005); negative check per quickstart §2
 
 **Checkpoint**: All four stories independently verified
 
@@ -114,9 +114,9 @@ because they layer onto the same small codebase (see Dependencies).
 
 ## Phase 7: Polish & Cross-Cutting Concerns
 
-- [ ] T029 Run the full quickstart.md validation pass (§1–§6) and record results in specs/001-modernize-codebase/quickstart.md as checked-off notes
-- [ ] T030 Amend the constitution's Technology & Data Constraints via /speckit-constitution: Python 3.12+, pandas/spotipy removed from the stack list (PATCH bump)
-- [ ] T031 Commit on the feature branch and open a PR to main per constitution Development Workflow
+- [X] T029 Run the full quickstart.md validation pass (§1–§6) and record results in specs/001-modernize-codebase/quickstart.md as checked-off notes
+- [X] T030 Amend the constitution's Technology & Data Constraints via /speckit-constitution: Python 3.12+, pandas/spotipy removed from the stack list (PATCH bump)
+- [X] T031 Commit on the feature branch and open a PR to main per constitution Development Workflow
 
 ---
 
