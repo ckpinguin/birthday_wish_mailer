@@ -18,11 +18,11 @@ because they layer onto the same small codebase (see Dependencies).
 
 **Purpose**: New dependency baseline and lint configuration
 
-- [ ] T001 Create and switch to feature branch `001-modernize-codebase` (constitution: multi-file changes go through a feature branch)
-- [ ] T002 [P] Rewrite requirements.txt to exactly two pinned runtime deps: `requests`, `beautifulsoup4` (research R1–R4)
-- [ ] T003 [P] Create requirements-dev.txt with pinned `pytest` and `flake8` (research R8)
-- [ ] T004 [P] Create .flake8 config excluding `.venv`, `__pycache__` so `flake8 .` lints only project code
-- [ ] T005 Refresh venv from the new requirements files (`.venv/bin/pip install -r requirements.txt -r requirements-dev.txt` after uninstalling old pins or recreating `.venv`) and verify `import requests, bs4` works
+- [X] T001 Create and switch to feature branch `001-modernize-codebase` (constitution: multi-file changes go through a feature branch)
+- [X] T002 [P] Rewrite requirements.txt to exactly two pinned runtime deps: `requests`, `beautifulsoup4` (research R1–R4)
+- [X] T003 [P] Create requirements-dev.txt with pinned `pytest` and `flake8` (research R8)
+- [X] T004 [P] Create .flake8 config excluding `.venv`, `__pycache__` so `flake8 .` lints only project code
+- [X] T005 Refresh venv from the new requirements files (`.venv/bin/pip install -r requirements.txt -r requirements-dev.txt` after uninstalling old pins or recreating `.venv`) and verify `import requests, bs4` works
 
 ---
 
@@ -32,7 +32,7 @@ because they layer onto the same small codebase (see Dependencies).
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T006 Create config.py: `AppConfig` dataclass (fields per data-model.md → AppConfig) and `load_config(path=".secret.json")` with required-key validation raising a `ConfigError`; no import-time side effects (research R10); do not read `PROXY_HOST`/`PROXY_PORT` (R4)
+- [X] T006 Create config.py: `AppConfig` dataclass (fields per data-model.md → AppConfig) and `load_config(path=".secret.json")` with required-key validation raising a `ConfigError`; no import-time side effects (research R10); do not read `PROXY_HOST`/`PROXY_PORT` (R4)
 
 **Checkpoint**: `python -c "from config import load_config"` works offline with no file reads at import
 
@@ -46,13 +46,13 @@ because they layer onto the same small codebase (see Dependencies).
 
 ### Implementation for User Story 1
 
-- [ ] T007 [P] [US1] Create recipients.py: `Recipient` dataclass + `load_recipients(csv_path)` + `due_today(recipients, today)` implementing the selection rules in data-model.md → Recipient (skip invalid rows with a warning instead of crashing)
-- [ ] T008 [P] [US1] Create charts.py (replaces billboard_timemachine.py): `fetch_top_three(date) -> list[tuple[str, str]]` using requests + BeautifulSoup with the existing CSS selectors; raise a proper `ChartsError` on HTTP/parse failure (fixes the legacy `raise "string"` bug, research R6)
-- [ ] T009 [P] [US1] Create spotify_links.py (replaces spotifier.py): client-credentials token request + `find_track_url(title, artist) -> str | None` via the Spotify Web API search endpoint (research R2 — no OAuth flow, no spotipy)
-- [ ] T010 [P] [US1] Create content.py: random template/image choice (count constants in one place per contracts/data-files.md), `[TITLE]`/`[NAME]`/`[SENDER]` replacement, chart-postscript rendering, and valid-HTML document assembly fixing the malformed `</p` tag (research R5, contracts/email-output.md)
-- [ ] T011 [US1] Rewrite mailer.py: `send_greeting(config, to_addr, html, image_path)` using `email.message.EmailMessage` with HTML alternative + CID inline image, STARTTLS to `MAILHOST:PORT`; config passed in (no import-time `.secret.json` read); proxy code removed (research R4, R5)
-- [ ] T012 [US1] Rewrite main.py: argparse (`-t/--test`), logging setup (stdout, `%(levelname)s %(message)s`, research R7), orchestration recipients → charts → links → content → mailer; test mode uses `TEST_RECIPIENT` with fallback to `BCC_ADDR` (FR-007); entry point `python main.py [--test]` unchanged (contracts/cli.md)
-- [ ] T013 [US1] Verify US1 end-to-end: adjust TEST_birthdays.csv dates to today, run `./run.sh --test`, check both received mails against contracts/email-output.md (constitution Principle III)
+- [X] T007 [P] [US1] Create recipients.py: `Recipient` dataclass + `load_recipients(csv_path)` + `due_today(recipients, today)` implementing the selection rules in data-model.md → Recipient (skip invalid rows with a warning instead of crashing)
+- [X] T008 [P] [US1] Create charts.py (replaces billboard_timemachine.py): `fetch_top_three(date) -> list[tuple[str, str]]` using requests + BeautifulSoup with the existing CSS selectors; raise a proper `ChartsError` on HTTP/parse failure (fixes the legacy `raise "string"` bug, research R6)
+- [X] T009 [P] [US1] Create spotify_links.py (replaces spotifier.py): client-credentials token request + `find_track_url(title, artist) -> str | None` via the Spotify Web API search endpoint (research R2 — no OAuth flow, no spotipy)
+- [X] T010 [P] [US1] Create content.py: random template/image choice (count constants in one place per contracts/data-files.md), `[TITLE]`/`[NAME]`/`[SENDER]` replacement, chart-postscript rendering, and valid-HTML document assembly fixing the malformed `</p` tag (research R5, contracts/email-output.md)
+- [X] T011 [US1] Rewrite mailer.py: `send_greeting(config, to_addr, html, image_path)` using `email.message.EmailMessage` with HTML alternative + CID inline image, STARTTLS to `MAILHOST:PORT`; config passed in (no import-time `.secret.json` read); proxy code removed (research R4, R5)
+- [X] T012 [US1] Rewrite main.py: argparse (`-t/--test`), logging setup (stdout, `%(levelname)s %(message)s`, research R7), orchestration recipients → charts → links → content → mailer; test mode uses `TEST_RECIPIENT` with fallback to `BCC_ADDR` (FR-007); entry point `python main.py [--test]` unchanged (contracts/cli.md)
+- [X] T013 [US1] Verify US1 end-to-end: adjust TEST_birthdays.csv dates to today, run `./run.sh --test`, check both received mails against contracts/email-output.md (constitution Principle III)
 
 **Checkpoint**: Refactored app sends equivalent mails in test mode — MVP done
 
@@ -66,11 +66,11 @@ because they layer onto the same small codebase (see Dependencies).
 
 ### Implementation for User Story 2
 
-- [ ] T014 [US2] In main.py wrap per-recipient enrichment (charts + links) in try/except: on any failure log WARNING with context and continue with empty/partial entries (FR-003, degradation table in contracts/email-output.md)
-- [ ] T015 [US2] In main.py isolate per-recipient compose/send: one failure logs ERROR, loop continues, run exits 2 if any due recipient was not served (FR-004, contracts/cli.md exit codes)
-- [ ] T016 [US2] In main.py handle fatal startup errors (ConfigError, missing CSV): log a message naming the missing piece, exit 1 — replaces legacy `exit(0)` (FR-008)
-- [ ] T017 [US2] Align all log lines with the format in contracts/cli.md (matched recipients, per-lookup outcome, per-send outcome; no credentials) (FR-009)
-- [ ] T018 [US2] Verify US2: simulate chart failure and missing config per quickstart §4–§5; confirm mail delivery, WARNING, and exit codes 0/1
+- [X] T014 [US2] In main.py wrap per-recipient enrichment (charts + links) in try/except: on any failure log WARNING with context and continue with empty/partial entries (FR-003, degradation table in contracts/email-output.md)
+- [X] T015 [US2] In main.py isolate per-recipient compose/send: one failure logs ERROR, loop continues, run exits 2 if any due recipient was not served (FR-004, contracts/cli.md exit codes)
+- [X] T016 [US2] In main.py handle fatal startup errors (ConfigError, missing CSV): log a message naming the missing piece, exit 1 — replaces legacy `exit(0)` (FR-008)
+- [X] T017 [US2] Align all log lines with the format in contracts/cli.md (matched recipients, per-lookup outcome, per-send outcome; no credentials) (FR-009)
+- [X] T018 [US2] Verify US2: simulate chart failure and missing config per quickstart §4–§5; confirm mail delivery, WARNING, and exit codes 0/1
 
 **Checkpoint**: A broken Billboard page can no longer cost anyone their birthday mail
 
@@ -84,7 +84,7 @@ because they layer onto the same small codebase (see Dependencies).
 
 ### Implementation for User Story 3
 
-- [ ] T019 [P] [US3] Delete replaced/dead files: spotifier.py, billboard_timemachine.py, Procfile, fly.toml (plan Structure Decision)
+- [X] T019 [P] [US3] Delete replaced/dead files: spotifier.py, billboard_timemachine.py, Procfile, fly.toml (plan Structure Decision)
 - [ ] T020 [P] [US3] Add one-line justification for each runtime dependency in README.md (SC-002, FR-006)
 - [ ] T021 [P] [US3] Update README.md Requirements section: Python ≥ 3.12 (drop the "3.10–3.12 pin ceiling" note)
 - [ ] T022 [US3] Verify fresh installs: `rm -rf .venv && PYTHON=python3.12 ./run.sh --help`, then scratch-copy check with `PYTHON=python3` (3.14) — both must bootstrap and print usage (SC-003); finish with one `./run.sh --test`

@@ -1,64 +1,40 @@
+"""Send the composed greeting via SMTP (STARTTLS)."""
+
+import logging
 import smtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-from email.mime.image import MIMEImage
-import json
-import socks
+from email.message import EmailMessage
+from pathlib import Path
+
+from config import AppConfig
+
+log = logging.getLogger(__name__)
+
+SUBJECT = "Happy Birthday!"
+IMAGE_CID = "birthday-image"
 
 
-class Mailer:
-    try:
-        with open(".secret.json", "r") as config_file:
-            config_data: dict = json.load(config_file)
-    except FileNotFoundError:
-        print("ERROR: No config file found!")
-        exit(0)
+def build_message(config: AppConfig, to_addr: str, html_body: str,
+                  image_path: str | Path) -> EmailMessage:
+    """HTML mail with the birthday image embedded inline (CID)."""
+    message = EmailMessage()
+    message["From"] = config.from_addr
+    message["To"] = to_addr
+    if config.bcc_addr:
+        message["Bcc"] = config.bcc_addr
+    message["Subject"] = SUBJECT
+    message.add_alternative(html_body, subtype="html")
+    html_part = message.get_payload()[0]
+    html_part.add_related(Path(image_path).read_bytes(),
+                          maintype="image", subtype="png",
+                          cid=f"<{IMAGE_CID}>")
+    return message
 
-    LOGIN = config_data.get("LOGIN")
-    MY_PASS = config_data.get("PASSWORD")
-    FROM_ADDR = config_data.get("FROM_ADDR")
-    PORT = config_data.get("PORT")
-    HOSTNAME = config_data.get("MAILHOST")
-    PROXY = config_data.get("PROXY_HOST", None)
-    PROXY_PORT = config_data.get("PROXY_PORT", None)
-    if PROXY is not None and PROXY_PORT is not None:
-        socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS4, PROXY, PROXY_PORT)
-        socks.wrapmodule(smtplib)
 
-    def __init__(self,
-                 email_addr: str,
-                 bcc: str | None) -> None:
-        self.email_addr = email_addr
-        self.bcc_addr = bcc
-        self.msg = MIMEMultipart()
-        # email_msg = EmailMessage()
-        self.msg["From"] = Mailer.FROM_ADDR
-        self.msg["To"] = self.email_addr
-        if self.bcc_addr:
-            self.msg["Bcc"] = self.bcc_addr
-        self.msg["Subject"] = "Happy Birthday!"
-
-    def send_mail(self,
-                  content: str) -> None:
-        print(f"Sending mail to {self.email_addr} from {Mailer.FROM_ADDR}")
-
-        html_text = MIMEText(content, 'html', 'utf-8')
-        self.msg.attach(html_text)
-        # self.msg.add_alternative(content, subtype='html', charset='utf-8')
-
-        with smtplib.SMTP(host=Mailer.HOSTNAME,
-                          port=Mailer.PORT) as connection:
-            connection.starttls()
-            connection.login(Mailer.LOGIN, Mailer.MY_PASS)
-
-            connection.send_message(self.msg)
-
-    def attach_image_to_mail(self, image_path) -> None:
-        with open(image_path, 'rb') as fp:
-            # Create a MIME image part
-            img_data = fp.read()
-        img = MIMEImage(img_data)
-        # Define the ID for the image
-        img.add_header('Content-ID', '<image1>')
-        self.msg.attach(img)
-        self.msg.attach(MIMEText('<img src="cid:image1">', 'html'))
+def send_greeting(config: AppConfig, to_addr: str, html_body: str,
+                  image_path: str | Path) -> None:
+    message = build_message(config, to_addr, html_body, image_path)
+    with smtplib.SMTP(config.mailhost, config.port) as connection:
+        connection.starttls()
+        connection.login(config.login, config.password)
+        connection.send_message(message)
+    log.info("sent mail to %s", to_addr)

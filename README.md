@@ -4,15 +4,32 @@ Since I'm so bad at remembering b'days and my proton calendar does not yet suppo
 
 ## Requirements
 
-- Python 3.10 – 3.12 (the pinned pandas/numpy versions in `requirements.txt`
-  don't have wheels for newer Pythons yet)
+- Python 3.12 or newer
 - The following files in the repo root — they are **gitignored on purpose**
   (secrets / personal data), so copy them to the server manually:
   - `.secret.json` with the keys `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET`,
-    `SENDER`, `BCC_ADDR`, `LOGIN`, `PASSWORD`, `FROM_ADDR`, `PORT`, `MAILHOST`
-    and optionally `PROXY_HOST`, `PROXY_PORT`
+    `SENDER`, `LOGIN`, `PASSWORD`, `FROM_ADDR`, `PORT`, `MAILHOST` and
+    optionally `BCC_ADDR`, `TEST_RECIPIENT` (test mails go there; falls back
+    to `BCC_ADDR`)
   - `birthdays.csv` and `TEST_birthdays.csv` with the columns
     `firstname,gender,email,year,month,day,active`
+
+### Dependencies
+
+Only two runtime libraries (everything else is standard library):
+
+- `requests` — HTTP client for the Billboard page and the Spotify Web API;
+  de-facto standard, clearer than stdlib `urllib`
+- `beautifulsoup4` — robust CSS-selector parsing of the Billboard chart page;
+  hand-rolled HTML parsing would be brittle and unreadable
+
+Dev-only tools live in `requirements-dev.txt` (`pytest`, `flake8`):
+
+```sh
+.venv/bin/pip install -r requirements-dev.txt
+.venv/bin/python -m pytest      # offline test suite (no mails, no network)
+.venv/bin/python -m flake8 .    # style check
+```
 
 ## Running it
 
