@@ -73,5 +73,5 @@ To trigger a real run immediately: `sudo systemctl start birthday-mailer.service
 If you prefer plain cron, this line does the same minus the catch-up behavior:
 
 ```text
-0 8 * * * /home/chris/birthday_wish_mailer/run.sh >> /home/chris/birthday_wish_mailer/mailer.log 2>&1
+0 8 * * * /home/<USER>/birthday_wish_mailer/run.sh >> /home/<USER>/birthday_wish_mailer/mailer.log 2>&1
 ```
