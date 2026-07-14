@@ -1,0 +1,11 @@
+[Unit]
+Description=Send birthday wish emails
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+# Adjust user and path to your homeserver setup:
+User=chris
+WorkingDirectory=/home/chris/birthday_wish_mailer
+ExecStart=/home/chris/birthday_wish_mailer/run.sh

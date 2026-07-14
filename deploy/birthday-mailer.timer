@@ -1,0 +1,11 @@
+[Unit]
+Description=Daily birthday wish mailer run
+
+[Timer]
+OnCalendar=*-*-* 08:00:00
+# If the server was off/asleep at 08:00, run as soon as it is back up
+# (a missed birthday mail is worse than a late one):
+Persistent=true
+
+[Install]
+WantedBy=timers.target
