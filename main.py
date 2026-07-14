@@ -1,202 +1,127 @@
+"""Send birthday wish emails with chart extras — entry point.
 
-import json
-import pandas
-import random
-import datetime as dt
-from billboard_timemachine import BillboardTimeMachine
-from spotifier import Spotifier
+Usage: python main.py [-t | --test]
+Exit codes: 0 ok, 1 fatal startup problem, 2 partial send failure.
+"""
+
 import argparse
-from mailer import Mailer
+import datetime as dt
+import logging
+import sys
 
+import charts
+import content
+import mailer
+import recipients
+import spotify_links
+from config import AppConfig, ConfigError, load_config
 
 BIRTHDAY_FILE = "birthdays.csv"
 BIRTHDAY_TEST_FILE = "TEST_birthdays.csv"
-TEST_MODE = False
+FIRST_CHART_YEAR = 1958
 
-try:
-    with open(".secret.json", "r") as config_file:
-        config_data: dict = json.load(config_file)
-except FileNotFoundError:
-    print("ERROR: No config file found!")
-    exit(0)
-SPOTIFY_CLIENT_ID = config_data["SPOTIFY_CLIENT_ID"]
-SPOTIFY_CLIENT_SECRET = config_data["SPOTIFY_CLIENT_SECRET"]
-SENDER = config_data.get("SENDER")
-BCC_ADDR = config_data.get("BCC_ADDR")
-TEST_RECIPIENT = BCC_ADDR
+log = logging.getLogger(__name__)
 
 
-def filter_active(df: pandas.DataFrame) -> pandas.DataFrame:
-    return df[df['active'] == 1]
-
-
-def filter_has_email(df: pandas.DataFrame) -> pandas.DataFrame:
-    return df.dropna(subset=['email'])
-
-
-def filter_has_birthday(df: pandas.DataFrame) -> pandas.DataFrame:
-    return df.dropna(subset=['year', 'month', 'day'])
-
-
-def filter_birthday_match(df: pandas.DataFrame,
-                          month, day) -> pandas.DataFrame:
-    return df.loc[(df['month'] == month) & (df['day'] == day)]
-
-
-def extract_fields(df: pandas.DataFrame) -> list[dict]:
-    return [{'firstname': row['firstname'],
-             'gender': row['gender'], 'email': row['email'],
-             'year': int(row['year']), 'month': int(row['month']),
-             'day': int(row['day'])}
-            for _, row in df.iterrows()]
-
-
-def find_persons_with_birthday_today(file: str) -> list[dict]:
-    # Looks quite verbose, but it's easier to understand and adapt:
-    df_all = pandas.read_csv(file)
-    df_active = filter_active(df_all)
-    df_has_email = filter_has_email(df_active)
-    df_birthday_exists = filter_has_birthday(df_has_email)
-    now = dt.datetime.now()
-    current_month = now.month
-    current_day = now.day
-    df_birthday_match = filter_birthday_match(
-        df_birthday_exists, current_month, current_day)
-    persons_that_have_birthday = extract_fields(df_birthday_match)
-    return persons_that_have_birthday
-
-
-def read_random_template() -> str:
-    rand_no = random.randint(1, 3)
-    template = f"letter_templates/letter_{rand_no}.txt"
-    with open(template, "r", encoding="utf-8") as file:
-        content = file.read()
-    return content
-
-
-def replace_content(content: str, name_to_insert: str, gender: str) -> str:
-    placeholder_name = '[NAME]'
-    placeholder_title = '[TITLE]'
-    placeholder_sender = '[SENDER]'
-    if gender == 'f':
-        title = "Liebe"
-    else:
-        title = "Lieber"
-
-    content_new = content.replace(placeholder_name, name_to_insert)
-    content_new = content_new.replace(placeholder_title, title)
-    content_new = content_new.replace(placeholder_sender, SENDER)
-    return content_new
-
-
-def get_special_content(birthday: str, top_three_songs_for_birthday: list[tuple],
-                        spotify_urls: list[str]) -> str:
-    content_special = ("<br><br>P.S. Die 3 Top-Songs der US-Charts am "
-                       f"{birthday} waren:<br>")
-    content_special += ("(Falls du kein Spotify hast, kannst du die "
-                        "Songs sehr leicht auf www.youtube.com finden)<br>")
-    i = 0
-    content_special += "<ul>"
-    for song, artist in top_three_songs_for_birthday:
-        content_special += \
-            f"<li><a href='{spotify_urls[i]}'>Song: {song}, Interpret: {artist}</a></li>"  # noqa
-        i += 1
-    content_special += "</ul>"
-    return content_special
-
-
-def construct_content(
-        person: dict,
-        birthday: str,
-        top_three_songs_for_birthday: list[tuple],
-        spotify_urls: list[str]) -> str:
-
-    template_content = read_random_template()
-    content = replace_content(
-        template_content, person['firstname'], person['gender'])
-
-    special_content = get_special_content(
-        top_three_songs_for_birthday=top_three_songs_for_birthday,
-        birthday=birthday,
-        spotify_urls=spotify_urls
-    ) if\
-        top_three_songs_for_birthday else ""
-
-    content_html = f"<html> <head> <meta charset='UTF-8'> </head> <body> <p> {content} </p  <p> {special_content} </p> </body> </html>"  # noqa
-    content_html = content_html.replace("\n", "<br>")  # for letter
-    return content_html
-
-
-def get_billboard_top_three_for_date(year: int,
-                                     month: int,
-                                     day: int) -> list[tuple]:
-    year = str(year)
-    month = str(month).zfill(2)
-    day = str(day).zfill(2)
-    billboard = BillboardTimeMachine(
-        f"{year}-{month}-{day}")
-    top_three_songs_for_date = billboard.get_top_three_artists_and_tracks()
-    return top_three_songs_for_date
-
-
-def get_content_and_send_email_to(persons: list) -> None:
-    for person in persons:
-        print(f"Getting data for {person}")
-        year, month, day = person['year'], person['month'], person['day']
-        billboard_entries = []
-        spotify_urls = []
-        if year < 1958:
-            print(("Year of birth is before billboard charts started."
-                   "No special content will be added."))
-        else:
-            billboard_entries = get_billboard_top_three_for_date(
-                year, month, day)
-            # Spotifier constructor expects two lists, so we need
-            # to unpack the zipped tuple-list:
-            spotify = Spotifier(*zip(*billboard_entries))
-            spotify_urls = spotify.get_spotify_urls()
-
-        content = construct_content(
-            person=person,
-            birthday=f"{day}.{month}.{year}",
-            top_three_songs_for_birthday=billboard_entries,
-            spotify_urls=spotify_urls)
-        recipient_email = TEST_RECIPIENT if TEST_MODE else person['email']
-        mailer = Mailer(email_addr=recipient_email, bcc=BCC_ADDR)
-        mailer.attach_image_to_mail(get_random_image_path())
-        mailer.send_mail(content=content)
-
-
-def get_random_image_path() -> str:
-    rand_no = random.randint(1, 3)
-    image_path = f"images/small_bday{rand_no}.png"
-    return image_path
-
-
-def main():
-    global TEST_MODE, BIRTHDAY_FILE
+def parse_args(argv: list[str] | None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        'Send birthday emails with some extras :-)')
+        description="Send birthday emails with some extras :-)")
     parser.add_argument(
-        '-t',
-        '--test',
-        help=("Use test CSV input file instead of real file and"
-              "send all mails to a test address (defined in .secret.json)"),
-        action='store_true')
-    args = parser.parse_args()
-    if args.test:
-        BIRTHDAY_FILE = BIRTHDAY_TEST_FILE
-        TEST_MODE = True
-
-    persons_with_birthday = find_persons_with_birthday_today(BIRTHDAY_FILE)
-    if persons_with_birthday:
-        print(f"Persons with birthday today: {persons_with_birthday}")
-    else:
-        print("No persons with birthday today found. Exiting.")
-        exit(0)
-    get_content_and_send_email_to(persons_with_birthday)
+        "-t", "--test", action="store_true",
+        help="use the test CSV input file and send all mails to the "
+             "test recipient (defined in .secret.json)")
+    return parser.parse_args(argv)
 
 
-# ___ MAIN ____
+def gather_chart_entries(person: recipients.Recipient,
+                         config: AppConfig) -> list[charts.ChartEntry]:
+    """Best-effort enrichment; any failure means fewer/no extras."""
+    if person.year < FIRST_CHART_YEAR:
+        log.info("%s was born before %d: no chart extras",
+                 person.firstname, FIRST_CHART_YEAR)
+        return []
+    try:
+        birth_date = dt.date(person.year, person.month, person.day)
+        entries = charts.fetch_top_three(birth_date)
+        log.info("charts for %s: ok (%d entries)",
+                 birth_date.isoformat(), len(entries))
+    except (charts.ChartsError, ValueError) as exc:
+        log.warning("charts lookup failed: %s - sending without extras",
+                    exc)
+        return []
+    try:
+        token = spotify_links.get_token(
+            config.spotify_client_id, config.spotify_client_secret)
+    except spotify_links.SpotifyError as exc:
+        log.warning("%s - sending song list without links", exc)
+        return entries
+    for entry in entries:
+        try:
+            entry.spotify_url = spotify_links.find_track_url(
+                token, entry.title, entry.artist)
+            log.info("spotify link for '%s': %s", entry.title,
+                     "ok" if entry.spotify_url else "no match")
+        except spotify_links.SpotifyError as exc:
+            log.warning("spotify link for '%s': %s", entry.title, exc)
+    return entries
+
+
+def send_to_person(person: recipients.Recipient, config: AppConfig,
+                   to_addr: str) -> None:
+    entries = gather_chart_entries(person, config)
+    template_text = content.choose_template_path().read_text(
+        encoding="utf-8")
+    greeting = content.fill_placeholders(
+        template_text, person.firstname, person.gender, config.sender)
+    birthday = f"{person.day}.{person.month}.{person.year}"
+    postscript = content.render_postscript(birthday, entries)
+    html_body = content.compose_html(greeting, postscript,
+                                     mailer.IMAGE_CID)
+    mailer.send_greeting(config, to_addr, html_body,
+                         content.choose_image_path())
+
+
+def run(test_mode: bool) -> int:
+    csv_file = BIRTHDAY_TEST_FILE if test_mode else BIRTHDAY_FILE
+    try:
+        config = load_config()
+        all_recipients = recipients.load_recipients(csv_file)
+    except (ConfigError, OSError) as exc:
+        log.error("cannot start: %s", exc)
+        return 1
+
+    test_recipient = None
+    if test_mode:
+        test_recipient = config.test_recipient or config.bcc_addr
+        if not test_recipient:
+            log.error("cannot start: test mode needs TEST_RECIPIENT "
+                      "or BCC_ADDR in .secret.json")
+            return 1
+
+    due = recipients.due_today(all_recipients, dt.date.today())
+    if not due:
+        log.info("no birthdays today")
+        return 0
+    log.info("matched %d recipient(s): %s", len(due),
+             ", ".join(person.firstname for person in due))
+
+    failures = 0
+    for person in due:
+        to_addr = test_recipient if test_mode else person.email
+        try:
+            send_to_person(person, config, to_addr)
+        except Exception as exc:
+            log.error("send to %s failed: %s", to_addr, exc)
+            failures += 1
+    return 2 if failures else 0
+
+
+def main(argv: list[str] | None = None) -> int:
+    logging.basicConfig(stream=sys.stdout, level=logging.INFO,
+                        format="%(levelname)s %(message)s")
+    args = parse_args(argv)
+    return run(args.test)
+
+
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

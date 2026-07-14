@@ -1,6 +1,12 @@
 <!--
 Sync Impact Report
 ==================
+Version change: 1.0.0 → 1.0.1 (PATCH: Technology & Data Constraints updated
+after feature 001-modernize-codebase — Python floor 3.12+, pandas/spotipy
+replaced by stdlib csv + direct Spotify Web API calls, dev-deps file added.
+No principle changes.)
+
+Previous report (v1.0.0 initial ratification):
 Version change: (template, unversioned) → 1.0.0 (initial ratification)
 Modified principles: none (initial adoption — all five principles newly defined)
 Added sections:
@@ -88,12 +94,13 @@ missed; the logs are the only witness.
 
 ## Technology & Data Constraints
 
-- **Language**: Python 3.10+ (the code uses modern union syntax such as
-  `str | None`).
-- **Core stack**: pandas for CSV handling, requests + BeautifulSoup for Billboard
-  scraping, spotipy for Spotify lookups, stdlib `smtplib`/`email.mime` for
-  delivery. Replacements require justification under Principle I.
-- **Dependencies**: pinned with exact versions in `requirements.txt`.
+- **Language**: Python 3.12+ (verified against the newest stable release).
+- **Core stack**: stdlib `csv` for recipient data, requests + BeautifulSoup for
+  Billboard scraping, requests against the Spotify Web API for song links,
+  stdlib `smtplib`/`email.message` for delivery. Replacements require
+  justification under Principle I.
+- **Dependencies**: runtime deps pinned in `requirements.txt` (each justified in
+  README.md); dev-only tools pinned in `requirements-dev.txt`.
 - **Data files**: recipient data is CSV with the columns `firstname`, `gender`,
   `email`, `year`, `month`, `day`, `active`; the `active` flag and missing-field
   filtering MUST be respected by any new data consumer.
@@ -128,4 +135,4 @@ or explicitly justified in the plan's Complexity Tracking table. Reviews of pull
 requests SHOULD verify compliance, with special weight on Principles II and III,
 whose violation is irreversible.
 
-**Version**: 1.0.0 | **Ratified**: 2026-07-14 | **Last Amended**: 2026-07-14
+**Version**: 1.0.1 | **Ratified**: 2026-07-14 | **Last Amended**: 2026-07-14

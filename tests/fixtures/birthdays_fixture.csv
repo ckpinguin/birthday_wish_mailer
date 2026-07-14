@@ -1,0 +1,8 @@
+active,name,firstname,email,year,month,day,gender
+1,Muster,Anna,anna@example.org,1950,3,5,f
+1,Muster,Ben,ben@example.org,1990,3,5,m
+0,Muster,Ina,ina@example.org,1980,3,5,f
+1,Muster,Emil,,1980,3,5,m
+1,Muster,Dora,dora@example.org,1980,3,,f
+1,Muster,Falk,falk@example.org,abcd,3,5,m
+1,Muster,Greta,greta@example.org,1955,4,6,f

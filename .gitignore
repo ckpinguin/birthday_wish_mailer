@@ -12,3 +12,4 @@ TEST_birthdays.csv
 .cache
 *.toml
 Procfile
+.pytest_cache/

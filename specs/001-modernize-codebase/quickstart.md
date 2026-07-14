@@ -2,6 +2,28 @@
 
 Runnable checks proving the refactor meets the spec. Run from the repo root.
 
+## Validation results (2026-07-14, implementation run)
+
+- [x] §1 Fresh installs: venv bootstrap via run.sh on Python 3.12.13 ✓;
+      scratch-copy install + import/composition smoke on Python 3.14.6 ✓
+- [x] §2 Offline suite: 16 tests pass in ~0.15 s, flake8 clean, zero
+      `# noqa`; negative check (broken `[TITLE]` replacement) failed
+      3 tests as required ✓
+- [x] §3 Test send: 2 mails delivered to TEST_RECIPIENT (Johanna < 1958
+      without postscript, Maxi 1990 with chart postscript) — **inbox
+      rendering to be confirmed visually by the maintainer**.
+      Note: Spotify links currently degrade to plain text because the
+      Web API returns 403 "Active premium subscription required for the
+      owner of the app" — account-side restriction, not a code issue;
+      links return automatically once the app owner has Premium again.
+- [x] §4 Degradation: charts pointed at unreachable host → both
+      greetings still sent, WARNING logged, exit 0 ✓
+- [x] §5 Failure visibility: missing .secret.json → "cannot start:
+      config file not found", exit 1 ✓
+- [x] §6 Observability: run log answers "who matched" and "what was
+      sent to whom" (see §3/§4 transcripts in the implementation
+      session) ✓
+
 ## Prerequisites
 
 - Python ≥ 3.12 available (`python3 --version`)
