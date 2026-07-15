@@ -30,6 +30,25 @@ def fill_placeholders(text: str, firstname: str, gender: str,
             .replace("[SENDER]", sender))
 
 
+def review_subject(firstname: str, email: str) -> str:
+    """Owner-facing subject: identifies the intended recipient."""
+    return f"Geburtstagsmail für {firstname} ({email})"
+
+
+def render_routing_block(firstname: str, email: str) -> str:
+    """Box naming the intended recipient; the owner removes it before
+    forwarding the greeting (specs/002 contracts/review-email.md)."""
+    recipient = html.escape(f"Für: {firstname} <{email}>")
+    return (
+        '<div style="border: 2px dashed #888888; background: #f2f2f2; '
+        'padding: 8px 12px; margin-bottom: 16px; '
+        'font-family: monospace;">'
+        f"{recipient}<br>"
+        "Diesen Kasten vor dem Weiterleiten entfernen."
+        "</div>"
+    )
+
+
 def render_postscript(birthday: str, entries: list[ChartEntry]) -> str:
     """The 'top songs on your birthday' block; empty if no entries."""
     if not entries:
@@ -52,10 +71,12 @@ def render_postscript(birthday: str, entries: list[ChartEntry]) -> str:
     )
 
 
-def compose_html(greeting: str, postscript: str, image_cid: str) -> str:
+def compose_html(greeting: str, postscript: str, image_cid: str,
+                 leading_block: str = "") -> str:
     greeting_html = html.escape(greeting).replace("\n", "<br>")
     return (
         '<html><head><meta charset="utf-8"></head><body>'
+        f"{leading_block}"
         f"<p>{greeting_html}</p>"
         f"{postscript}"
         f'<p><img src="cid:{image_cid}"></p>'

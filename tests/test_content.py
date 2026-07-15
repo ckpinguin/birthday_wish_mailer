@@ -59,3 +59,50 @@ def test_compose_html_without_postscript():
     html_body = content.compose_html("Hallo", "", "cid-x")
     assert "<ul>" not in html_body
     assert 'src="cid:cid-x"' in html_body
+
+
+def test_review_subject_names_person_and_address():
+    subject = content.review_subject("Anna", "anna@example.org")
+    assert subject == "Geburtstagsmail für Anna (anna@example.org)"
+
+
+def test_routing_block_shows_escaped_plain_text_address():
+    block = content.render_routing_block("A & B", "a+b@example.org")
+    assert "A &amp; B" in block
+    assert "a+b@example.org" in block
+    assert "&lt;a+b@example.org&gt;" in block  # not a live angle-tag
+    assert "mailto:" not in block
+    assert "Diesen Kasten vor dem Weiterleiten entfernen." in block
+
+
+def test_routing_block_is_visually_separated():
+    block = content.render_routing_block("Anna", "anna@example.org")
+    soup = BeautifulSoup(block, "html.parser")
+    style = soup.find("div")["style"]
+    assert "border" in style and "background" in style
+
+
+def test_compose_html_places_routing_block_first():
+    block = content.render_routing_block("Anna", "anna@example.org")
+    html_body = content.compose_html("Hallo", "", "cid-x", block)
+    body_content = html_body.split("<body>")[1]
+    assert body_content.startswith(block)
+
+
+def test_compose_html_unchanged_without_routing_block():
+    # FR-006: the greeting document must stay byte-identical to the
+    # pre-feature composer output when no leading block is given
+    html_body = content.compose_html("Liebe Anna,\nAlles Gute!", "", "cid-x")
+    assert html_body == (
+        '<html><head><meta charset="utf-8"></head><body>'
+        "<p>Liebe Anna,<br>Alles Gute!</p>"
+        '<p><img src="cid:cid-x"></p>'
+        "</body></html>"
+    )
+
+
+def test_stripping_routing_block_restores_original_document():
+    block = content.render_routing_block("Anna", "anna@example.org")
+    with_block = content.compose_html("Hallo", "", "cid-x", block)
+    without_block = content.compose_html("Hallo", "", "cid-x")
+    assert with_block.replace(block, "") == without_block

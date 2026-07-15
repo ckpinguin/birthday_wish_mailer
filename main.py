@@ -13,8 +13,8 @@ import charts
 import content
 import mailer
 import recipients
-import spotify_links
 from config import AppConfig, ConfigError, load_config
+from spotify_links import search_url
 
 BIRTHDAY_FILE = "birthdays.csv"
 BIRTHDAY_TEST_FILE = "TEST_birthdays.csv"
@@ -33,8 +33,8 @@ def parse_args(argv: list[str] | None) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
-def gather_chart_entries(person: recipients.Recipient,
-                         config: AppConfig) -> list[charts.ChartEntry]:
+def gather_chart_entries(
+        person: recipients.Recipient) -> list[charts.ChartEntry]:
     """Best-effort enrichment; any failure means fewer/no extras."""
     if person.year < FIRST_CHART_YEAR:
         log.info("%s was born before %d: no chart extras",
@@ -49,35 +49,26 @@ def gather_chart_entries(person: recipients.Recipient,
         log.warning("charts lookup failed: %s - sending without extras",
                     exc)
         return []
-    try:
-        token = spotify_links.get_token(
-            config.spotify_client_id, config.spotify_client_secret)
-    except spotify_links.SpotifyError as exc:
-        log.warning("%s - sending song list without links", exc)
-        return entries
     for entry in entries:
-        try:
-            entry.spotify_url = spotify_links.find_track_url(
-                token, entry.title, entry.artist)
-            log.info("spotify link for '%s': %s", entry.title,
-                     "ok" if entry.spotify_url else "no match")
-        except spotify_links.SpotifyError as exc:
-            log.warning("spotify link for '%s': %s", entry.title, exc)
+        entry.spotify_url = search_url(entry.title, entry.artist)
     return entries
 
 
 def send_to_person(person: recipients.Recipient, config: AppConfig,
                    to_addr: str) -> None:
-    entries = gather_chart_entries(person, config)
+    entries = gather_chart_entries(person)
     template_text = content.choose_template_path().read_text(
         encoding="utf-8")
     greeting = content.fill_placeholders(
         template_text, person.firstname, person.gender, config.sender)
     birthday = f"{person.day}.{person.month}.{person.year}"
     postscript = content.render_postscript(birthday, entries)
+    routing_block = content.render_routing_block(person.firstname,
+                                                 person.email)
+    subject = content.review_subject(person.firstname, person.email)
     html_body = content.compose_html(greeting, postscript,
-                                     mailer.IMAGE_CID)
-    mailer.send_greeting(config, to_addr, html_body,
+                                     mailer.IMAGE_CID, routing_block)
+    mailer.send_greeting(config, to_addr, subject, html_body,
                          content.choose_image_path())
 
 
@@ -97,6 +88,10 @@ def run(test_mode: bool) -> int:
             log.error("cannot start: test mode needs TEST_RECIPIENT "
                       "or BCC_ADDR in .secret.json")
             return 1
+    elif not config.owner_recipient:
+        log.error("cannot start: real mode needs OWNER_RECIPIENT "
+                  "in .secret.json")
+        return 1
 
     due = recipients.due_today(all_recipients, dt.date.today())
     if not due:
@@ -107,11 +102,16 @@ def run(test_mode: bool) -> int:
 
     failures = 0
     for person in due:
-        to_addr = test_recipient if test_mode else person.email
+        # never the birthday person's address: the owner reviews and
+        # forwards every greeting manually (specs/002)
+        to_addr = test_recipient if test_mode else config.owner_recipient
         try:
             send_to_person(person, config, to_addr)
+            log.info("sent mail for %s (intended: %s) to %s",
+                     person.firstname, person.email, to_addr)
         except Exception as exc:
-            log.error("send to %s failed: %s", to_addr, exc)
+            log.error("send for %s (intended: %s) failed: %s",
+                      person.firstname, person.email, exc)
             failures += 1
     return 2 if failures else 0
 

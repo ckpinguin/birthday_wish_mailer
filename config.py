@@ -13,8 +13,6 @@ REQUIRED_KEYS = (
     "PASSWORD",
     "FROM_ADDR",
     "SENDER",
-    "SPOTIFY_CLIENT_ID",
-    "SPOTIFY_CLIENT_SECRET",
 )
 
 
@@ -30,10 +28,9 @@ class AppConfig:
     password: str
     from_addr: str
     sender: str
-    spotify_client_id: str
-    spotify_client_secret: str
     bcc_addr: str | None = None
     test_recipient: str | None = None
+    owner_recipient: str | None = None
 
 
 def load_config(path: str | Path = CONFIG_FILE) -> AppConfig:
@@ -64,8 +61,7 @@ def load_config(path: str | Path = CONFIG_FILE) -> AppConfig:
         password=data["PASSWORD"],
         from_addr=data["FROM_ADDR"],
         sender=data["SENDER"],
-        spotify_client_id=data["SPOTIFY_CLIENT_ID"],
-        spotify_client_secret=data["SPOTIFY_CLIENT_SECRET"],
         bcc_addr=data.get("BCC_ADDR"),
         test_recipient=data.get("TEST_RECIPIENT"),
+        owner_recipient=data.get("OWNER_RECIPIENT"),
     )

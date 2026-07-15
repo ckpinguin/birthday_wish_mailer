@@ -23,7 +23,7 @@ Flat single-project layout at repository root (`config.py`, `content.py`, `maile
 
 **Purpose**: Confirm a clean starting point so feature regressions are attributable
 
-- [ ] T001 Baseline check at repo root: run `.venv/bin/python -m pytest` and `.venv/bin/python -m flake8 .` — both must pass before any change (quickstart.md prerequisite)
+- [X] T001 Baseline check at repo root: run `.venv/bin/python -m pytest` and `.venv/bin/python -m flake8 .` — both must pass before any change (quickstart.md prerequisite)
 
 ---
 
@@ -43,11 +43,11 @@ No foundational tasks — the feature-001 codebase is the foundation; every chan
 
 ### Implementation for User Story 1
 
-- [ ] T002 [P] [US1] Extend `AppConfig` in config.py with `owner_recipient: str | None = None` and read the optional `OWNER_RECIPIENT` key in `load_config()` (research R2; do NOT add to `REQUIRED_KEYS`)
-- [ ] T003 [US1] Create tests/test_config.py: `owner_recipient` populated when `OWNER_RECIPIENT` present, `None` when absent; existing required-key validation unaffected (fixture-style JSON via `tmp_path`, offline)
-- [ ] T004 [US1] Add real-mode startup guard in `run()` in main.py: if not test mode and `config.owner_recipient` is falsy, log `cannot start: real mode needs OWNER_RECIPIENT in .secret.json` and return 1 before any send (FR-003; message style per contracts/cli-and-config.md, mirroring the existing test-mode guard)
-- [ ] T005 [US1] Change delivery-address selection in `run()` in main.py: `to_addr = test_recipient if test_mode else config.owner_recipient` — `person.email` is no longer a delivery target in any mode (FR-001, research R1)
-- [ ] T006 [US1] Implement the log contract in main.py and mailer.py: per-send success line `sent mail for {firstname} (intended: {email}) to {delivery_addr}` and failure line naming the birthday person (contracts/review-email.md, research R7); drop/adjust the old `sent mail to %s` line in mailer.py so logs aren't duplicated or misleading
+- [X] T002 [P] [US1] Extend `AppConfig` in config.py with `owner_recipient: str | None = None` and read the optional `OWNER_RECIPIENT` key in `load_config()` (research R2; do NOT add to `REQUIRED_KEYS`)
+- [X] T003 [US1] Create tests/test_config.py: `owner_recipient` populated when `OWNER_RECIPIENT` present, `None` when absent; existing required-key validation unaffected (fixture-style JSON via `tmp_path`, offline)
+- [X] T004 [US1] Add real-mode startup guard in `run()` in main.py: if not test mode and `config.owner_recipient` is falsy, log `cannot start: real mode needs OWNER_RECIPIENT in .secret.json` and return 1 before any send (FR-003; message style per contracts/cli-and-config.md, mirroring the existing test-mode guard)
+- [X] T005 [US1] Change delivery-address selection in `run()` in main.py: `to_addr = test_recipient if test_mode else config.owner_recipient` — `person.email` is no longer a delivery target in any mode (FR-001, research R1)
+- [X] T006 [US1] Implement the log contract in main.py and mailer.py: per-send success line `sent mail for {firstname} (intended: {email}) to {delivery_addr}` and failure line naming the birthday person (contracts/review-email.md, research R7); drop/adjust the old `sent mail to %s` line in mailer.py so logs aren't duplicated or misleading
 
 **Checkpoint**: `./run.sh --test` behaves as before (delivery-wise); a real run delivers everything to the owner (still in the old mail format — that's US2/US3); missing-key guard verified. US1 is a shippable safety improvement on its own.
 
@@ -61,12 +61,12 @@ No foundational tasks — the feature-001 codebase is the foundation; every chan
 
 ### Implementation for User Story 2
 
-- [ ] T007 [P] [US2] Add `review_subject(firstname, email)` helper in content.py returning `Geburtstagsmail für {firstname} ({email})` (research R4)
-- [ ] T008 [US2] Add `render_routing_block(firstname, email)` in content.py: dashed-border grey `<div>` with inline CSS, HTML-escaped `Für: {firstname} <{email}>` line plus removal hint `Diesen Kasten vor dem Weiterleiten entfernen.` exactly per contracts/review-email.md (research R3)
-- [ ] T009 [US2] Extend `compose_html()` in content.py with a leading-block parameter (default `""`) emitted as the first element inside `<body>`, before the greeting paragraph
-- [ ] T010 [P] [US2] Change `build_message()`/`send_greeting()` in mailer.py to take the subject as a parameter; retire the fixed `SUBJECT` constant (transport logic otherwise untouched)
-- [ ] T011 [US2] Wire it together in `send_to_person()` in main.py: build subject via `review_subject`, routing block via `render_routing_block`, pass both through `compose_html`/`send_greeting` — unconditionally, so test mode carries the identical review format (FR-008, research R5)
-- [ ] T012 [US2] Extend tests/test_content.py: subject contains name and address; routing block HTML-escapes specials (e.g. name with `&`) and contains the address as plain text with no `mailto:` link; `compose_html` places the block first in `<body>`
+- [X] T007 [P] [US2] Add `review_subject(firstname, email)` helper in content.py returning `Geburtstagsmail für {firstname} ({email})` (research R4)
+- [X] T008 [US2] Add `render_routing_block(firstname, email)` in content.py: dashed-border grey `<div>` with inline CSS, HTML-escaped `Für: {firstname} <{email}>` line plus removal hint `Diesen Kasten vor dem Weiterleiten entfernen.` exactly per contracts/review-email.md (research R3)
+- [X] T009 [US2] Extend `compose_html()` in content.py with a leading-block parameter (default `""`) emitted as the first element inside `<body>`, before the greeting paragraph
+- [X] T010 [P] [US2] Change `build_message()`/`send_greeting()` in mailer.py to take the subject as a parameter; retire the fixed `SUBJECT` constant (transport logic otherwise untouched)
+- [X] T011 [US2] Wire it together in `send_to_person()` in main.py: build subject via `review_subject`, routing block via `render_routing_block`, pass both through `compose_html`/`send_greeting` — unconditionally, so test mode carries the identical review format (FR-008, research R5)
+- [X] T012 [US2] Extend tests/test_content.py: subject contains name and address; routing block HTML-escapes specials (e.g. name with `&`) and contains the address as plain text with no `mailto:` link; `compose_html` places the block first in `<body>`
 
 **Checkpoint**: A `--test` run now delivers fully labeled review emails; multiple due rows are distinguishable from the inbox list alone.
 
@@ -80,7 +80,7 @@ No foundational tasks — the feature-001 codebase is the foundation; every chan
 
 ### Implementation for User Story 3
 
-- [ ] T013 [US3] Add FR-006 invariant tests in tests/test_content.py: `compose_html` with an empty leading block is byte-identical to the pre-feature composition; with a block, removing the block substring yields exactly the same document; block styling assertions (inline `border`/`background` CSS, removal-hint text) per contracts/review-email.md
+- [X] T013 [US3] Add FR-006 invariant tests in tests/test_content.py: `compose_html` with an empty leading block is byte-identical to the pre-feature composition; with a block, removing the block substring yields exactly the same document; block styling assertions (inline `border`/`background` CSS, removal-hint text) per contracts/review-email.md
 - [ ] T014 [US3] Forward rehearsal (manual validation): execute quickstart.md scenario 4 — forward a `--test` review mail to the test address with the block deleted and a personal sentence added; confirm clean rendering (SC-003)
 
 **Checkpoint**: All three stories independently verified; the full owner workflow works end to end.
@@ -91,8 +91,8 @@ No foundational tasks — the feature-001 codebase is the foundation; every chan
 
 **Purpose**: Documentation, full-suite verification, and the constitution's test-before-real gate
 
-- [ ] T015 [P] Document the `OWNER_RECIPIENT` key and the review-and-forward workflow in README.md (placeholder address only — Principle II)
-- [ ] T016 Full offline verification at repo root: `.venv/bin/python -m pytest` and `.venv/bin/python -m flake8 .` both clean (constitution Development Workflow)
+- [X] T015 [P] Document the `OWNER_RECIPIENT` key and the review-and-forward workflow in README.md (placeholder address only — Principle II)
+- [X] T016 Full offline verification at repo root: `.venv/bin/python -m pytest` and `.venv/bin/python -m flake8 .` both clean (constitution Development Workflow)
 - [ ] T017 Execute quickstart.md scenarios 2, 3, and 5 end to end: add the key to `.secret.json`, inspect a real `--test` send against contracts/review-email.md, and run the safe negative test for the missing-key guard (Principle III gate; scenario 6 happens after deployment on the server)
 
 ---

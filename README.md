@@ -7,10 +7,12 @@ Since I'm so bad at remembering b'days and my proton calendar does not yet suppo
 - Python 3.12 or newer
 - The following files in the repo root — they are **gitignored on purpose**
   (secrets / personal data), so copy them to the server manually:
-  - `.secret.json` with the keys `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET`,
-    `SENDER`, `LOGIN`, `PASSWORD`, `FROM_ADDR`, `PORT`, `MAILHOST` and
-    optionally `BCC_ADDR`, `TEST_RECIPIENT` (test mails go there; falls back
-    to `BCC_ADDR`)
+  - `.secret.json` with the keys `SENDER`, `LOGIN`, `PASSWORD`, `FROM_ADDR`,
+    `PORT`, `MAILHOST`, `OWNER_RECIPIENT` (your own address — all real
+    birthday mail goes there for review, see below) and optionally
+    `BCC_ADDR`, `TEST_RECIPIENT` (test mails go there; falls back to
+    `BCC_ADDR`). No Spotify credentials or developer account are needed —
+    song links point to Spotify search results, built without any API call.
   - `birthdays.csv` and `TEST_birthdays.csv` with the columns
     `firstname,gender,email,year,month,day,active`
 
@@ -18,8 +20,8 @@ Since I'm so bad at remembering b'days and my proton calendar does not yet suppo
 
 Only two runtime libraries (everything else is standard library):
 
-- `requests` — HTTP client for the Billboard page and the Spotify Web API;
-  de-facto standard, clearer than stdlib `urllib`
+- `requests` — HTTP client for the Billboard chart page; de-facto standard,
+  clearer than stdlib `urllib`
 - `beautifulsoup4` — robust CSS-selector parsing of the Billboard chart page;
   hand-rolled HTML parsing would be brittle and unreadable
 
@@ -43,6 +45,23 @@ runs the app through it, so this is all you need:
 
 If your default `python3` is too new, point the bootstrap at another
 interpreter once: `PYTHON=python3.12 ./run.sh --test`
+
+## Review-and-forward workflow
+
+The app never mails a birthday person directly. Every generated greeting is
+delivered to `OWNER_RECIPIENT` (e.g. `you@example.com`) so you can add a
+personal touch first:
+
+1. On a birthday, you receive one mail per person, subject
+   `Geburtstagsmail für <name> (<address>)`.
+2. The mail starts with a grey dashed box naming the intended recipient;
+   below it sits the finished greeting exactly as they should see it.
+3. Forward the mail: delete the grey box, add your personal line, set a
+   normal subject, and send it to the address from the box.
+
+A real run without `OWNER_RECIPIENT` in `.secret.json` stops with an error
+before sending anything (exit code 1). Test runs (`--test`) still deliver to
+`TEST_RECIPIENT`, using the same review layout.
 
 ## Daily run on the homeserver (systemd timer)
 
