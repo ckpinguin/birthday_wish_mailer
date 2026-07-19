@@ -7,5 +7,5 @@ After=network-online.target
 Type=oneshot
 # Adjust user and path to your homeserver setup:
 User=chris
-WorkingDirectory=/home/chris/birthday_wish_mailer
-ExecStart=/home/chris/birthday_wish_mailer/run.sh
+WorkingDirectory=/opt/birthday_wish_mailer
+ExecStart=/opt/birthday_wish_mailer/run.sh
